@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10172b">
+  <title>나의 프로젝트 | 홈</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; min-height: 100dvh; color: #f8faff; font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; background: radial-gradient(circle at 15% 10%, #2c416c, transparent 43%), linear-gradient(135deg, #0c1325, #182744); }
+    main { width: min(920px, calc(100% - 36px)); margin: auto; padding: clamp(56px, 10vw, 110px) 0 55px; }
+    .eyebrow { color: #b9d1ff; font-size: 13px; letter-spacing: .16em; }
+    h1 { font-size: clamp(38px, 7vw, 66px); line-height: 1.17; letter-spacing: -.05em; margin: 20px 0; }
+    .intro { color: #bac8df; line-height: 1.8; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card { display: flex; flex-direction: column; min-height: 290px; padding: 28px; border-radius: 24px; border: 1px solid #4b5e80; color: inherit; text-decoration: none; transition: transform .2s, border-color .2s; }
+    .card:hover, .card:focus-visible { transform: translateY(-5px); border-color: #b4d0ff; outline: none; }
+    .goal { background: linear-gradient(145deg, #234a5b, #172b42); }
+    .game { background: linear-gradient(145deg, #3a2b60, #1b2543); }
+    .emoji { font-size: 48px; }
+    h2 { font-size: 26px; margin: 22px 0 10px; }
+    .card p { color: #c9d4e7; line-height: 1.7; margin: 0; }
+    .action { margin-top: auto; padding-top: 26px; font-weight: 750; color: #d4e4ff; }
+    footer { text-align: center; margin-top: 50px; font-size: 13px; color: #98a9c5; }
+    @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } .card { min-height: 235px; padding: 24px; } }
+    @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">MY PROJECT SPACE</div>
+    <h1>나의 프로젝트<br>한곳에서 시작하기.</h1>
+    <p class="intro">목표를 관리하고 직접 만든 게임을 즐겨보세요.<br>아래에서 원하는 페이지를 선택하세요.</p>
+    <nav class="grid" aria-label="프로젝트 메뉴">
+      <a class="card goal" href="./goal/index.html">
+        <span class="emoji" aria-hidden="true">🌊</span>
+        <h2>자기소개 · 만다라트</h2>
+        <p>D-day, 자기소개, 나의 목표판을 확인하고 수정해요.</p>
+        <span class="action">목표 페이지 열기 →</span>
+      </a>
+      <a class="card game" href="./game/index.html">
+        <span class="emoji" aria-hidden="true">🎮</span>
+        <h2>게임 아케이드</h2>
+        <p>두더지 잡기, 반응속도 테스트, 운석 피하기, 그림자 숲을 즐겨요.</p>
+        <span class="action">게임 페이지 열기 →</span>
+      </a>
+    </nav>
+    <footer>MY PROJECT · MADE BY ME</footer>
+  </main>
+</body>
+</html>
