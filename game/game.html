@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>두더지 잡기</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#e8f8df,#b9e6b5);font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;color:#23432b;padding:20px;user-select:none;-webkit-user-select:none}.game{width:min(100%,430px);background:#fffdf6;border-radius:28px;padding:24px 20px 28px;box-shadow:0 14px 35px #3d79442b;text-align:center}h1{font-size:30px;margin:0 0 6px}.hint{margin:0 0 18px;color:#69816c;font-size:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}.stat{background:#eef7e7;padding:12px 4px;border-radius:15px;font-size:12px}.stat strong{display:block;font-size:26px;color:#2f7441;margin-top:3px}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:#8ac978;border-radius:22px;padding:14px;touch-action:manipulation}.hole{aspect-ratio:1;border:0;border-radius:50%;background:radial-gradient(ellipse at center,#3d2b25 0%,#50382d 52%,#74503a 70%,#6d9f54 73%);display:grid;place-items:center;cursor:pointer;position:relative;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent}.mole{font-size:clamp(35px,12vw,65px);transform:translateY(110%);transition:transform .13s ease;line-height:1;pointer-events:none;filter:drop-shadow(0 4px 2px #0003)}.hole.up .mole{transform:translateY(4%)}.hole.hit .mole{transform:translateY(4%) scale(.85)}button.start{margin-top:22px;width:100%;border:0;border-radius:16px;background:#2f934d;color:white;font-size:19px;font-weight:800;padding:16px;cursor:pointer}button.start:disabled{opacity:.55;cursor:default}.message{min-height:24px;margin:16px 0 0;font-size:14px;font-weight:600;color:#4c6b51}@media(max-width:360px){.game{padding:18px 12px}.board{gap:8px;padding:10px}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<main class="game">
+<h1>🐹 두더지 잡기</h1><p class="hint">30초 동안 두더지를 최대한 많이 잡아보세요!</p>
+<div class="stats"><div class="stat">점수<strong id="score">0</strong></div><div class="stat">남은 시간<strong id="time">30</strong></div><div class="stat">최고 기록<strong id="best">0</strong></div></div>
+<div class="board" id="board" aria-label="두더지 잡기 게임판"></div>
+<button class="start" id="start">게임 시작</button>
+<p class="message" id="message" aria-live="polite">시작 버튼을 눌러주세요!</p>
+</main>
+<script>
+const board=document.getElementById('board');
+const scoreEl=document.getElementById('score');
+const timeEl=document.getElementById('time');
+const bestEl=document.getElementById('best');
+const startBtn=document.getElementById('start');
+const message=document.getElementById('message');
+const holes=[];
+let score=0,time=30,best=0,playing=false,active=-1,clock=null,spawnTimer=null,hideTimer=null,round=0;
+try{best=Number(localStorage.getItem('whackMoleBest'))||0}catch(e){}
+bestEl.textContent=best;
+for(let i=0;i<9;i++){
+ const hole=document.createElement('button');hole.type='button';hole.className='hole';hole.setAttribute('aria-label',`${i+1}번 구멍`);
+ hole.innerHTML='<span class="mole">🐹</span>';
+ hole.addEventListener('click',()=>hit(i));board.appendChild(hole);holes.push(hole);
+}
+function clearMole(){holes.forEach(h=>h.classList.remove('up','hit'));active=-1}
+function showMole(id){
+ if(!playing||id!==round)return;
+ clearMole();let next=Math.floor(Math.random()*9);
+ active=next;holes[next].classList.add('up');
+ const duration=Math.max(430,900-score*12);
+ hideTimer=setTimeout(()=>{if(!playing||id!==round)return;clearMole();spawnTimer=setTimeout(()=>showMole(id),170)},duration);
+}
+function hit(i){
+ if(!playing||active!==i)return;
+ score++;scoreEl.textContent=score;
+ holes[i].classList.add('hit');active=-1;
+ clearTimeout(hideTimer);clearTimeout(spawnTimer);
+ const id=round;spawnTimer=setTimeout(()=>showMole(id),180);
+}
+function endGame(){
+ playing=false;round++;clearInterval(clock);clearTimeout(spawnTimer);clearTimeout(hideTimer);clearMole();time=0;timeEl.textContent='0';
+ if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('whackMoleBest',String(best))}catch(e){}message.textContent=`🎉 신기록! ${score}점 달성!`}
+ else message.textContent=`게임 종료! ${score}점 획득했어요.`;
+ startBtn.disabled=false;startBtn.textContent='다시 시작';
+}
+function startGame(){
+ if(playing)return;
+ round++;const id=round;score=0;time=30;playing=true;scoreEl.textContent='0';timeEl.textContent='30';message.textContent='두더지를 빠르게 터치하세요!';startBtn.disabled=true;startBtn.textContent='게임 진행 중';clearMole();
+ const endAt=Date.now()+30000;
+ clock=setInterval(()=>{time=Math.max(0,Math.ceil((endAt-Date.now())/1000));timeEl.textContent=time;if(time===0)endGame()},100);
+ showMole(id);
+}
+startBtn.addEventListener('click',startGame);
+</script>
+</body>
+</html>
