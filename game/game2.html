@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>반응속도 테스트</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif}body{background:#172033;color:white}#game{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;touch-action:manipulation;user-select:none;cursor:pointer;transition:background .12s}#game.ready{background:#172033}#game.wait{background:#db3445}#game.go{background:#16a34a}#game.early{background:#bd2940}#game.result{background:#1f4279}h1{font-size:clamp(28px,7vw,46px);margin:0 0 18px}#message{font-size:clamp(20px,5vw,32px);font-weight:700;line-height:1.5}#sub{opacity:.9;margin:15px 0 24px;line-height:1.6}#progress{font-size:18px;opacity:.85;margin-bottom:22px}button{border:0;border-radius:999px;background:#fff;color:#18213b;font-size:18px;font-weight:800;padding:15px 32px;cursor:pointer;min-height:54px}button:focus-visible{outline:3px solid #fff;outline-offset:4px}#history{margin-top:24px;line-height:1.9;font-size:16px}#average{font-size:clamp(26px,7vw,42px);font-weight:900;margin-top:10px}
+</style>
+</head>
+<body>
+<main id="game" class="ready" aria-live="polite">
+<h1>⚡ 반응속도 테스트</h1>
+<div id="progress">총 5번 도전</div>
+<div id="message">초록색이 되면 터치!</div>
+<div id="sub">빨간색일 때 누르면 너무 빨라요.</div>
+<button id="action" type="button">게임 시작</button>
+<div id="average"></div>
+<div id="history"></div>
+</main>
+<script>
+const game=document.getElementById('game'),progress=document.getElementById('progress'),message=document.getElementById('message'),sub=document.getElementById('sub'),action=document.getElementById('action'),history=document.getElementById('history'),average=document.getElementById('average');
+let state='ready',timer=null,startTime=0,results=[];
+function renderHistory(){history.textContent=results.length?'기록: '+results.map((v,i)=>`${i+1}회 ${v}ms`).join(' · '):'';}
+function beginRound(){clearTimeout(timer);state='wait';game.className='wait';progress.textContent=`${results.length+1} / 5회`;message.textContent='기다리세요...';sub.textContent='초록색으로 바뀌면 누르세요!';action.hidden=true;average.textContent='';timer=setTimeout(()=>{state='go';game.className='go';message.textContent='지금 누르세요!';sub.textContent='최대한 빠르게 터치!';startTime=performance.now();},2000+Math.random()*3000);}
+function handleTap(){if(state==='wait'){clearTimeout(timer);state='early';game.className='early';message.textContent='너무 빨라요!';sub.textContent='이번 회차는 기록되지 않아요.';action.textContent='다시 도전';action.hidden=false;return;}if(state==='go'){const elapsed=Math.round(performance.now()-startTime);results.push(elapsed);renderHistory();state='result';game.className='result';message.textContent=`${elapsed} ms`;if(results.length===5){const avg=Math.round(results.reduce((a,b)=>a+b,0)/5);progress.textContent='5 / 5회 완료';sub.textContent='5번의 반응속도 평균';average.textContent=`평균 ${avg} ms`;action.textContent='처음부터 다시 하기';state='done';}else{sub.textContent='다음 회차도 준비됐나요?';action.textContent='다음 도전';}action.hidden=false;}}
+function handleButton(){if(state==='ready'||state==='done'){results=[];renderHistory();beginRound();}else if(state==='early'||state==='result'){beginRound();}}
+game.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;handleTap();});action.addEventListener('click',e=>{e.stopPropagation();handleButton();});
+</script>
+</body>
+</html>
