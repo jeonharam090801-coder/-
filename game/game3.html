@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>운석 피하기</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050817;color:white;font-family:system-ui,sans-serif;touch-action:none}canvas{display:block;width:100vw;height:100dvh;touch-action:none}#hud{position:fixed;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 14px) 18px 12px;display:flex;justify-content:space-between;pointer-events:none;font-size:16px;font-weight:700;text-shadow:0 2px 6px #000}#overlay{position:fixed;inset:0;background:#050817bd;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}#panel{max-width:350px;width:100%;padding:28px 20px;border:1px solid #6375ac;border-radius:22px;background:#101b37ee;box-shadow:0 18px 60px #0008}h1{font-size:30px;margin:0 0 12px}p{line-height:1.7;color:#d7e4ff}button{border:0;border-radius:14px;padding:16px 34px;background:#7dd3fc;color:#082034;font-size:19px;font-weight:800;cursor:pointer;touch-action:manipulation}#result{font-weight:700;color:#fde68a;min-height:26px}
+</style>
+</head>
+<body>
+<canvas id="game" aria-label="운석 피하기 게임 화면"></canvas>
+<div id="hud"><span id="score">생존 0.0초</span><span id="best">최고 0.0초</span></div>
+<div id="overlay"><div id="panel"><h1>🚀 운석 피하기</h1><p>손가락으로 좌우 드래그<br>PC에서는 ← → 방향키<br>운석을 피하며 오래 살아남으세요!</p><div id="result"></div><button id="start">게임 시작</button></div></div>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const overlay=document.getElementById('overlay'),startBtn=document.getElementById('start'),result=document.getElementById('result');
+const scoreEl=document.getElementById('score'),bestEl=document.getElementById('best');
+let w=0,h=0,dpr=1,shipX=0,shipY=0,shipR=20,meteors=[],stars=[],running=false,elapsed=0,spawnClock=0,last=0,raf=0;
+let best=0;try{best=Number(localStorage.getItem('meteor-best-v1'))||0}catch(e){};
+bestEl.textContent='최고 '+best.toFixed(1)+'초';
+const keys={left:false,right:false};
+function resize(){const oldW=w;w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);shipY=h-Math.max(85,h*.12);shipR=Math.max(16,Math.min(23,w*.055));shipX=oldW?shipX*w/oldW:w/2;shipX=Math.max(shipR,Math.min(w-shipR,shipX));stars=Array.from({length:85},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3}));}
+addEventListener('resize',resize);resize();
+function start(){cancelAnimationFrame(raf);running=true;elapsed=0;spawnClock=0;meteors=[];shipX=w/2;keys.left=keys.right=false;last=performance.now();scoreEl.textContent='생존 0.0초';overlay.style.display='none';raf=requestAnimationFrame(frame);}
+function end(){running=false;cancelAnimationFrame(raf);if(elapsed>best){best=elapsed;try{localStorage.setItem('meteor-best-v1',String(best))}catch(e){}}bestEl.textContent='최고 '+best.toFixed(1)+'초';result.textContent='생존 시간: '+elapsed.toFixed(2)+'초';startBtn.textContent='다시 시작';overlay.style.display='flex';}
+function addMeteor(){const r=12+Math.random()*19;meteors.push({x:r+Math.random()*Math.max(1,w-2*r),y:-r-5,r,vy:170+Math.min(450,elapsed*10)+Math.random()*100,rot:Math.random()*6.28,spin:(Math.random()-.5)*2});}
+function drawShip(){ctx.save();ctx.translate(shipX,shipY);ctx.shadowColor='#22d3ee';ctx.shadowBlur=15;ctx.fillStyle='#67e8f9';ctx.beginPath();ctx.moveTo(0,-shipR*1.4);ctx.lineTo(shipR,shipR);ctx.lineTo(0,shipR*.45);ctx.lineTo(-shipR,shipR);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#1d4ed8';ctx.beginPath();ctx.arc(0,0,shipR*.35,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fb923c';ctx.beginPath();ctx.moveTo(-shipR*.35,shipR*.8);ctx.lineTo(0,shipR*(1.5+Math.random()*.3));ctx.lineTo(shipR*.35,shipR*.8);ctx.fill();ctx.restore();}
+function drawMeteor(m){ctx.save();ctx.translate(m.x,m.y);ctx.rotate(m.rot);ctx.shadowColor='#fb923c';ctx.shadowBlur=9;ctx.fillStyle='#a65b35';ctx.beginPath();for(let i=0;i<9;i++){let a=i*Math.PI*2/9,r=m.r*(i%2?.87:1);i?ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r):ctx.moveTo(Math.cos(a)*r,Math.sin(a)*r)}ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#6b3528';ctx.beginPath();ctx.arc(-m.r*.2,-m.r*.1,m.r*.25,0,7);ctx.arc(m.r*.35,m.r*.25,m.r*.15,0,7);ctx.fill();ctx.restore();}
+function draw(){ctx.fillStyle='#050817';ctx.fillRect(0,0,w,h);ctx.fillStyle='#cbd5e1';for(const s of stars){ctx.globalAlpha=.35+.4*Math.sin(elapsed+s.x);ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill()}ctx.globalAlpha=1;for(const m of meteors)drawMeteor(m);drawShip();}
+function frame(now){if(!running)return;const dt=Math.min((now-last)/1000,.05);last=now;elapsed+=dt;scoreEl.textContent='생존 '+elapsed.toFixed(1)+'초';if(keys.left)shipX-=370*dt;if(keys.right)shipX+=370*dt;shipX=Math.max(shipR,Math.min(w-shipR,shipX));spawnClock+=dt;const interval=Math.max(.16,.88-elapsed*.012);while(spawnClock>=interval){spawnClock-=interval;addMeteor();if(elapsed>25&&Math.random()<Math.min(.6,(elapsed-25)*.01))addMeteor();}for(let i=meteors.length-1;i>=0;i--){const m=meteors[i];m.y+=m.vy*dt;m.rot+=m.spin*dt;if(m.y-m.r>h){meteors.splice(i,1);continue}const dx=m.x-shipX,dy=m.y-shipY;if(dx*dx+dy*dy<(m.r+shipR*.65)**2){draw();end();return;}}draw();raf=requestAnimationFrame(frame);}
+function movePointer(e){if(!running)return;shipX=Math.max(shipR,Math.min(w-shipR,e.clientX));}
+canvas.addEventListener('pointerdown',e=>{if(running){canvas.setPointerCapture(e.pointerId);movePointer(e)}});canvas.addEventListener('pointermove',e=>{if(running&&e.buttons)movePointer(e)});
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();keys[e.key==='ArrowLeft'?'left':'right']=true;}});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight')keys[e.key==='ArrowLeft'?'left':'right']=false;});
+addEventListener('blur',()=>{keys.left=keys.right=false;});startBtn.addEventListener('click',start);draw();
+})();
+</script>
+</body>
+</html>
